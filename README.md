@@ -1,3 +1,9 @@
+<div align="center" >
+
+![ScanFlow Voice.](./assets/ai-microphone.png)
+
+</div>
+
 # ScanFlow Voice
 
 ScanFlow Voice é um aplicativo móvel desenvolvido em Flutter que transforma texto em fala (Text-to-Speech) de alta qualidade. O app oferece flexibilidade permitindo que o usuário digite textos manualmente ou utilize a câmera para capturar textos de imagens e fotos através de reconhecimento óptico de caracteres (OCR).
@@ -38,6 +44,26 @@ A lógica de comunicação com APIs externas e processamento pesado é isolada e
 
 - **Services:** Camada responsável pela integração de dados e lógica de negócios (ex: chamadas de API, processamento de OCR).
 - **UI/Widgets:** Camada de apresentação responsável apenas por desenhar a tela e capturar interações do usuário.
+
+## Preview
+
+<div>
+<img src="assets/1.0.0/Screenshot_20251229_165241.jpg" alt="drawing" style="width:200px;"/>
+<img src="assets/1.0.0/Screenshot_20251229_165119.jpg" alt="drawing" style="width:200px;"/>
+<img src="assets/1.0.0/Screenshot_20251229_165153.jpg" alt="drawing" style="width:200px;"/>
+<div>
+
+<div>
+<img src="assets/1.0.0/Screenshot_20251229_165425.jpg" alt="drawing" style="width:200px;"/>
+<img src="assets/1.0.0/Screenshot_20251229_165444.jpg" alt="drawing" style="width:200px;"/>
+<img src="assets/1.0.0/Screenshot_20251229_165211.jpg" alt="drawing" style="width:200px;"/>
+<div>
+
+<div>
+<img src="assets/1.0.0/sc1.png" alt="drawing" style="width:200px;"/>
+<img src="assets/1.0.0/sc2.png" alt="drawing" style="width:200px;"/>
+<img src="assets/1.0.0/Screenshot_20251229_165719.jpg" alt="drawing" style="width:200px;"/>
+<div>
 
 ## Como Executar
 
