@@ -106,6 +106,9 @@ A lógica de comunicação com APIs externas é isolada em classes de serviço d
    API_KEY=sua_chave_aqui
    ```
    O arquivo já está no `.gitignore` e é carregado como asset na inicialização do app.
+   A chave é gerada no painel da ElevenLabs, em **Developers → API Keys** ([elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys)).
+
+   > **Atenção:** sem o `.env` o app não compila, porque o arquivo é declarado como asset no `pubspec.yaml`. Nunca faça commit da chave real nem a coloque no README ou no código.
 3. Instale as dependências:
    ```bash
    flutter pub get
