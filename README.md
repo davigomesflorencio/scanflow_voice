@@ -16,34 +16,55 @@ ScanFlow Voice é um aplicativo móvel desenvolvido em Flutter que transforma te
 
 ## Tecnologias Utilizadas
 
-- **Linguagem:** Dart
-- **Framework:** Flutter
-- **IA de Voz:** ElevenLabs API
+- **Linguagem:** Dart 3.13
+- **Framework:** Flutter 3.47 (canal stable)
+- **IA de Voz:** ElevenLabs API (modelo `eleven_multilingual_v2`)
 - **Visão Computacional:** Google ML Kit (On-device Machine Learning)
+- **Gerência de estado e injeção de dependências:** GetX
 
 ## Dependências Principais
 
-O projeto utiliza diversas bibliotecas do ecossistema Flutter para entregar suas funcionalidades:
+| Pacote                          | Versão    | Uso                                                                |
+| ------------------------------- | --------- | ------------------------------------------------------------------ |
+| `http`                          | ^1.6.0    | Requisições REST à API da ElevenLabs para síntese de áudio.        |
+| `just_audio`                    | ^0.10.6   | Reprodução do áudio sintetizado recebido da API.                   |
+| `google_mlkit_text_recognition` | ^0.17.1   | Reconhecimento e extração de texto em imagens, offline.            |
+| `google_mlkit_commons`          | ^0.13.0   | Tipos comuns do ML Kit (`InputImage`).                             |
+| `image_picker`                  | ^1.2.4    | Captura de fotos pela câmera ou seleção de imagens da galeria.     |
+| `camera`                        | ^0.12.1   | Acesso às câmeras do dispositivo.                                  |
+| `get`                           | ^4.7.3    | Controllers, estado reativo e navegação.                           |
+| `flutter_dotenv`                | ^6.0.1    | Leitura da chave de API a partir do arquivo `.env`.                |
+| `flutter_expandable_fab`        | ^2.5.2    | Botão flutuante expansível com as ações de câmera e galeria.       |
+| `siri_wave`                     | ^2.3.1    | Animação de onda durante a reprodução do áudio.                    |
+| `delightful_toast`              | ^1.1.0    | Mensagens de feedback para o usuário.                              |
 
-- **`http`**: Utilizado para realizar requisições REST à API da ElevenLabs para síntese de áudio.
-- **`google_mlkit_text_recognition`**: Pacote do Google ML Kit para Flutter, responsável pelo reconhecimento e extração de texto em imagens de forma offline e rápida.
-- **`image_picker`**: Permite ao usuário tirar fotos com a câmera ou selecionar imagens da galeria do dispositivo.
-- **`audioplayers`** (ou similar): Para a reprodução do áudio sintetizado recebido da API.
+> `flutter_expandable_fab` está fixado na série 2.x: a versão 3.0.0 exige migrar o app para `package:material_ui`. Veja o [CHANGELOG](CHANGELOG.md).
 
 ## Arquitetura e Padrões de Projeto
 
 O projeto foi estruturado visando a manutenibilidade e a separação de responsabilidades:
 
+```
+lib/
+├── main.dart                     # Inicialização, carregamento do .env e tema
+├── components/painters/          # Desenho dos blocos de texto reconhecidos
+├── controllers/home_controller.dart  # Estado da tela, OCR e reprodução de áudio
+├── domain/audio/                 # Fonte de áudio em memória para o just_audio
+├── screens/home_page.dart        # Interface principal
+└── services/tts_service.dart     # Integração com a ElevenLabs
+```
+
 ### Service Pattern (Padrão de Serviço)
 
-A lógica de comunicação com APIs externas e processamento pesado é isolada em classes de serviço dedicadas.
+A lógica de comunicação com APIs externas é isolada em classes de serviço dedicadas.
 
-- Exemplo: `TtsService` encapsula toda a complexidade das chamadas HTTP para a ElevenLabs, expondo apenas métodos simples como `synthesize` para a camada de UI.
+- Exemplo: `TtsService` encapsula as chamadas HTTP para a ElevenLabs, expondo apenas o método `synthesize`, que devolve os bytes do áudio.
 
 ### Organização
 
-- **Services:** Camada responsável pela integração de dados e lógica de negócios (ex: chamadas de API, processamento de OCR).
-- **UI/Widgets:** Camada de apresentação responsável apenas por desenhar a tela e capturar interações do usuário.
+- **Services:** Integração com APIs externas (ex: síntese de voz).
+- **Controllers (GetX):** Estado da tela e regras de negócio — OCR com ML Kit, chamada ao serviço de TTS e controle do player.
+- **Screens/Components:** Camada de apresentação, responsável apenas por desenhar a tela e capturar interações do usuário.
 
 ## Preview
 
@@ -51,29 +72,49 @@ A lógica de comunicação com APIs externas e processamento pesado é isolada e
 <img src="assets/1.0.0/Screenshot_20251229_165241.jpg" alt="drawing" style="width:200px;"/>
 <img src="assets/1.0.0/Screenshot_20251229_165119.jpg" alt="drawing" style="width:200px;"/>
 <img src="assets/1.0.0/Screenshot_20251229_165153.jpg" alt="drawing" style="width:200px;"/>
-<div>
+</div>
 
 <div>
 <img src="assets/1.0.0/Screenshot_20251229_165425.jpg" alt="drawing" style="width:200px;"/>
 <img src="assets/1.0.0/Screenshot_20251229_165444.jpg" alt="drawing" style="width:200px;"/>
 <img src="assets/1.0.0/Screenshot_20251229_165211.jpg" alt="drawing" style="width:200px;"/>
-<div>
+</div>
 
 <div>
 <img src="assets/1.0.0/sc1.png" alt="drawing" style="width:200px;"/>
 <img src="assets/1.0.0/sc2.png" alt="drawing" style="width:200px;"/>
 <img src="assets/1.0.0/Screenshot_20251229_165719.jpg" alt="drawing" style="width:200px;"/>
-<div>
+</div>
 
 ## Como Executar
 
-1. Clone este repositório.
-2. Instale as dependências:
+### Pré-requisitos
+
+- Flutter 3.47 ou superior (Dart 3.13)
+- Uma chave de API da [ElevenLabs](https://elevenlabs.io/)
+- Um dispositivo ou emulador Android/iOS (o OCR do ML Kit não funciona na web nem no desktop)
+
+### Passos
+
+1. Clone este repositório:
+   ```bash
+   git clone https://github.com/davigomesflorencio/scanflow_voice.git
+   cd scanflow_voice
+   ```
+2. Crie um arquivo `.env` na raiz do projeto com a sua chave da ElevenLabs:
+   ```env
+   API_KEY=sua_chave_aqui
+   ```
+   O arquivo já está no `.gitignore` e é carregado como asset na inicialização do app.
+3. Instale as dependências:
    ```bash
    flutter pub get
    ```
-3. Configure sua chave de API da ElevenLabs no serviço apropriado.
 4. Execute o projeto:
    ```bash
    flutter run
    ```
+
+## Changelog
+
+O histórico de versões está em [CHANGELOG.md](CHANGELOG.md).
