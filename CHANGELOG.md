@@ -25,6 +25,8 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   | `icons_launcher` (dev)          | ^3.0.3       | ^3.1.0    |
 
 - Dependências transitivas atualizadas via `pubspec.lock`.
+- Android: `versionCode` e `versionName` passam a vir do `pubspec.yaml` (build number `11`, acima do `versionCode` 10 fixo anterior).
+- Android: o build de release não falha mais sem `android/key.properties`; nesse caso assina com a chave de debug.
 - `analysis_options.yaml` passa a excluir da análise as pastas de build e de plataforma (`android`, `ios`, `web`, `windows`, `macos`, `linux`).
 
 ### Observações
