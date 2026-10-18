@@ -40,6 +40,11 @@ class MyApp extends StatelessWidget {
           ),
         ),
         fontFamily: 'Rubik',
+        textSelectionTheme: TextSelectionThemeData(
+          selectionColor: Color.fromARGB(255, 51, 204, 204).withValues(alpha: 0.3),
+          selectionHandleColor: Color.fromARGB(255, 51, 204, 204),
+          cursorColor: Color.fromARGB(255, 51, 204, 204),
+        ),
       ),
       initialBinding: BindingsBuilder(() {
         Get.lazyPut(() => HomeController());
