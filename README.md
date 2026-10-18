@@ -37,6 +37,9 @@ ScanFlow Voice é um aplicativo móvel desenvolvido em Flutter que transforma te
 | `flutter_expandable_fab`        | ^2.5.2    | Botão flutuante expansível com as ações de câmera e galeria.       |
 | `siri_wave`                     | ^2.3.1    | Animação de onda durante a reprodução do áudio.                    |
 | `delightful_toast`              | ^1.1.0    | Mensagens de feedback para o usuário.                              |
+| `package_info_plus`             | ^10.2.2   | Leitura da versão instalada do app.                                |
+| `shared_preferences`            | ^2.5.6    | Guarda a última versão vista pelo usuário.                         |
+| `pub_semver`                    | ^2.2.1    | Comparação de versões para o diálogo de novidades.                 |
 
 > `flutter_expandable_fab` está fixado na série 2.x: a versão 3.0.0 exige migrar o app para `package:material_ui`. Veja o [CHANGELOG](CHANGELOG.md).
 
@@ -47,8 +50,11 @@ O projeto foi estruturado visando a manutenibilidade e a separação de responsa
 ```
 lib/
 ├── main.dart                     # Inicialização, carregamento do .env e tema
+├── changelog/changelog.dart      # Novidades por versão, mostradas após atualizar
 ├── components/painters/          # Desenho dos blocos de texto reconhecidos
-├── controllers/home_controller.dart  # Estado da tela, OCR e reprodução de áudio
+├── controllers/
+│   ├── home_controller.dart      # Estado da tela, OCR e reprodução de áudio
+│   └── changelog_controller.dart # Diálogo "Novidades" após uma atualização
 ├── domain/audio/                 # Fonte de áudio em memória para o just_audio
 ├── screens/home_page.dart        # Interface principal
 └── services/tts_service.dart     # Integração com a ElevenLabs
@@ -91,8 +97,26 @@ A lógica de comunicação com APIs externas é isolada em classes de serviço d
 ### Pré-requisitos
 
 - Flutter 3.47 ou superior (Dart 3.13)
+- JDK 17 ou superior
+- Android SDK com a plataforma **Android 16 (API 36)** e um **build-tools** completo (veja [Solução de problemas](#solução-de-problemas))
 - Uma chave de API da [ElevenLabs](https://elevenlabs.io/)
-- Um dispositivo ou emulador Android/iOS (o OCR do ML Kit não funciona na web nem no desktop)
+- Um dispositivo ou emulador **Android 14 (API 34) ou superior**, ou iOS. O OCR do ML Kit não funciona na web nem no desktop
+
+### Ambiente Android
+
+| Item | Valor | Onde fica |
+| --- | --- | --- |
+| Android Gradle Plugin | 9.0.1 | `android/settings.gradle.kts` |
+| Gradle | 9.2.0 | `android/gradle/wrapper/gradle-wrapper.properties` |
+| Kotlin | 2.3.20 | `android/settings.gradle.kts` |
+| `compileSdk` / `targetSdk` | 36 | `android/app/build.gradle.kts` |
+| `minSdk` | 34 | `android/app/build.gradle.kts` |
+| `applicationId` | `com.davi.dev.scanflowvoice` | `android/app/build.gradle.kts` |
+| `versionName` / `versionCode` | lidos do campo `version` do `pubspec.yaml` | `pubspec.yaml` |
+
+> A versão do AGP e a versão do Gradle são numerações diferentes. O AGP 9.0.1 precisa do Gradle 9.1 ou superior; não existe Gradle 9.0.1.
+
+O Kotlin embutido do AGP 9 está desligado (`android.builtInKotlin=false` e `android.newDsl=false` em `android/gradle.properties`) porque o plugin `audio_session`, usado pelo `just_audio`, ainda aplica o Kotlin Gradle Plugin. Quando ele lançar uma versão compatível, remova essas duas linhas e o `id("kotlin-android")` de `android/app/build.gradle.kts`.
 
 ### Passos
 
@@ -117,6 +141,69 @@ A lógica de comunicação com APIs externas é isolada em classes de serviço d
    ```bash
    flutter run
    ```
+
+### Build de release (Android)
+
+O build de release é assinado com a chave definida em `android/key.properties`. Esse arquivo e o keystore (`*.jks`) estão no `android/.gitignore` e **nunca** devem ir para o repositório.
+
+1. Coloque o keystore em `android/app/` (ex.: `android/app/scanflowvoice.jks`).
+2. Crie `android/key.properties`:
+   ```properties
+   storePassword=<senha do keystore>
+   keyPassword=<senha da chave>
+   keyAlias=<alias da chave>
+   storeFile=scanflowvoice.jks
+   ```
+   `storeFile` é relativo a `android/app/`.
+3. Gere o pacote:
+   ```bash
+   flutter build appbundle --release
+   ```
+   O arquivo sai em `build/app/outputs/bundle/release/app-release.aab`.
+
+Sem o `android/key.properties` (por exemplo, num clone novo), o build de release continua funcionando, mas é assinado com a chave de debug, que a Play Store não aceita.
+
+Para conferir qual chave assinou o pacote:
+```bash
+keytool -printcert -jarfile build/app/outputs/bundle/release/app-release.aab
+```
+
+> Guarde uma cópia do keystore e das senhas fora do projeto. Sem eles não é possível publicar atualizações do app.
+
+### Versionamento
+
+A versão vem do campo `version` do `pubspec.yaml`, no formato `nome+build` (ex.: `2.0.0+11`):
+
+- `2.0.0` vira o `versionName`, a versão que o usuário vê;
+- `11` vira o `versionCode`, que precisa **aumentar a cada envio** para a Play Store.
+
+A cada nova versão:
+
+1. Aumente o `version` no `pubspec.yaml` (ex.: `2.0.1+12`).
+2. Adicione a entrada em [CHANGELOG.md](CHANGELOG.md).
+3. Adicione as novidades para o usuário no mapa `_changelog` de `lib/changelog/changelog.dart`. Elas aparecem num diálogo na primeira abertura após a atualização.
+
+### Solução de problemas
+
+**`Could not locate aapt` seguido de `Activity class {com.example.gnix_tts/...MainActivity} does not exist`**
+
+O Flutter procura o `aapt` na versão mais alta do build-tools instalada. Se essa instalação estiver incompleta (por exemplo, uma pasta só com `.installer`), ele não lê o APK e tenta abrir o app pelo `namespace` (`com.example.gnix_tts`) em vez do `applicationId` (`com.davi.dev.scanflowvoice`). Reinstale essa versão do build-tools pelo **SDK Manager** do Android Studio ou por linha de comando:
+
+```bash
+sdkmanager "build-tools;37.0.0"
+```
+
+**`Read timed out` ao baixar de `dl.google.com`**
+
+O Gradle não consegue baixar do repositório Maven do Google (AGP e bibliotecas Android). Não é erro do projeto. Abra a URL do erro no navegador para testar; se não carregar, verifique antivírus com análise de HTTPS, firewall, VPN ou tente outra rede.
+
+**`Could not install Gradle distribution ... gradle-9.0.1.zip` (404)**
+
+O Android Studio colocou a versão do AGP no lugar da versão do Gradle. Use `gradle-9.2.0-bin.zip` (ou outra versão 9.1+) em `android/gradle/wrapper/gradle-wrapper.properties`.
+
+**Aviso `Deprecated 'org.jetbrains.kotlin.android' plugin usage`**
+
+Esperado enquanto o Kotlin embutido do AGP 9 estiver desligado (veja [Ambiente Android](#ambiente-android)). Não impede o build.
 
 ## Changelog
 
