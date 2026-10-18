@@ -14,6 +14,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:gnix_tts/domain/audio/gnix_audio_source.dart';
 import 'package:gnix_tts/main.dart';
+import 'package:gnix_tts/services/haptics_helper.dart';
 import 'package:gnix_tts/services/tts_service.dart';
 import 'package:siri_wave/siri_wave.dart';
 
@@ -80,9 +81,11 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       final bytes = await _ttsService.synthesize(text);
       final audioSource = GnixAudioSource(bytes);
       await player.setAudioSource(audioSource);
+      HapticsHelper.success();
       await player.play();
       observeAudioStream();
     } catch (e) {
+      HapticsHelper.error();
       DelightToastBar(
         autoDismiss: false,
         builder: (context) => const ToastCard(
@@ -160,12 +163,15 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       if (pickedFile != null) {
         await _processFile(pickedFile.path);
       } else {
+        HapticsHelper.warning();
         showMessage('Nenhuma imagem selecionada.');
       }
     } on PlatformException catch (e) {
+      HapticsHelper.error();
       showMessage('Falha ao obter imagem: ${e.message}');
       print('PlatformException ao obter imagem: ${e.toString()}');
     } catch (e) {
+      HapticsHelper.error();
       showMessage('Ocorreu um erro: ${e.toString()}');
       print('Erro ao obter imagem: ${e.toString()}');
     } finally {
@@ -181,6 +187,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       final inputImage = InputImage.fromFilePath(path);
       await _processImage2(inputImage);
     } catch (e) {
+      HapticsHelper.error();
       ScaffoldMessenger.of(Get.context!).showSnackBar(
         SnackBar(content: Text('Erro ao processar imagem: ${e.toString()}')),
       );
@@ -214,6 +221,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       } else {
         textObx.value = recognizedText.text;
         textController.text = recognizedText.text;
+        HapticsHelper.success();
         customPaint = null;
         player.clearAudioSources();
         key.currentState?.toggle();
@@ -229,6 +237,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
   }
 
   void _handleError(String message) {
+    HapticsHelper.error();
     textObx.value = 'Falha ao processar imagem';
     customPaint = null;
 
