@@ -5,7 +5,13 @@ Todas as mudanças relevantes deste projeto são documentadas neste arquivo.
 O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
-## [1.0.1] - 2026-10-17
+## [2.0.0] - 2026-10-17
+
+### Adicionado
+
+- Diálogo "Novidades" na primeira abertura após uma atualização (nunca na primeira instalação), com as mudanças de todas as versões que o usuário ainda não viu. Textos em `lib/changelog/changelog.dart`.
+- Dependências `package_info_plus`, `shared_preferences` e `pub_semver`.
+- Planos de melhoria de design em `docs/improvements/design/`.
 
 ### Alterado
 
@@ -25,6 +31,8 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   | `icons_launcher` (dev)          | ^3.0.3       | ^3.1.0    |
 
 - Dependências transitivas atualizadas via `pubspec.lock`.
+- Android: `versionCode` e `versionName` passam a vir do `pubspec.yaml` (build number `11`, acima do `versionCode` 10 fixo anterior).
+- Android: o build de release não falha mais sem `android/key.properties`; nesse caso assina com a chave de debug.
 - `analysis_options.yaml` passa a excluir da análise as pastas de build e de plataforma (`android`, `ios`, `web`, `windows`, `macos`, `linux`).
 
 ### Observações
@@ -41,5 +49,5 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Player de áudio com onda animada (Siri wave), barra de progresso e controle de reprodução.
 - Ícone do app e capturas de tela de pré-visualização.
 
-[1.0.1]: https://github.com/davigomesflorencio/scanflow_voice/compare/b265d3c...HEAD
+[2.0.0]: https://github.com/davigomesflorencio/scanflow_voice/compare/b265d3c...HEAD
 [1.0.0]: https://github.com/davigomesflorencio/scanflow_voice/commits/b265d3c
