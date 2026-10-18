@@ -31,6 +31,7 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   | `icons_launcher` (dev)          | ^3.0.3       | ^3.1.0    |
 
 - Dependências transitivas atualizadas via `pubspec.lock`.
+- Android: Android Gradle Plugin 8.11.1 → 9.0.1, Gradle 8.14 → 9.2.0 e Kotlin 2.2.20 → 2.3.20; `kotlinOptions` migrado para `kotlin { compilerOptions { } }`. O Kotlin embutido do AGP 9 continua desligado (`android.builtInKotlin=false`) enquanto o plugin `audio_session` aplicar o Kotlin Gradle Plugin.
 - Android: `versionCode` e `versionName` passam a vir do `pubspec.yaml` (build number `11`, acima do `versionCode` 10 fixo anterior).
 - Android: o build de release não falha mais sem `android/key.properties`; nesse caso assina com a chave de debug.
 - `analysis_options.yaml` passa a excluir da análise as pastas de build e de plataforma (`android`, `ios`, `web`, `windows`, `macos`, `linux`).
