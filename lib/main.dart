@@ -1,6 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:gnix_tts/components/asset_preloader.dart';
 import 'package:gnix_tts/controllers/changelog_controller.dart';
 import 'package:gnix_tts/controllers/home_controller.dart';
 import 'package:gnix_tts/screens/home_page.dart';
@@ -15,6 +16,7 @@ Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
   _cameras = await availableCameras();
 
+  WidgetsBinding.instance.deferFirstFrame();
   runApp(const MyApp());
 }
 
@@ -50,7 +52,7 @@ class MyApp extends StatelessWidget {
         Get.lazyPut(() => HomeController());
         Get.put(ChangelogController());
       }),
-      home: HomePage(),
+      home: AssetPreloader(child: HomePage()),
     );
   }
 }
