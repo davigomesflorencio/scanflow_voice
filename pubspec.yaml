@@ -24,7 +24,6 @@ dependencies:
   camera: ^0.12.1
   image_picker: ^1.2.4
   camera_android: ^0.10.12
-  flutter_expandable_fab: ^2.5.2
   siri_wave: ^2.3.1
   package_info_plus: ^10.2.2
   shared_preferences: ^2.5.6

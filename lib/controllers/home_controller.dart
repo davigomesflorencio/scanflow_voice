@@ -5,7 +5,6 @@ import 'package:delightful_toast/delight_toast.dart';
 import 'package:delightful_toast/toast/components/toast_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:get/route_manager.dart';
 import 'package:get/state_manager.dart';
 import 'package:gnix_tts/components/painters/text_detector_painter.dart';
@@ -18,9 +17,8 @@ import 'package:gnix_tts/services/haptics_helper.dart';
 import 'package:gnix_tts/services/tts_service.dart';
 import 'package:siri_wave/siri_wave.dart';
 
-class HomeController extends GetxController with GetTickerProviderStateMixin {
+class HomeController extends GetxController {
   final TextEditingController textController = TextEditingController();
-  RxString get textCtl => textController.text.obs;
   final AudioPlayer player = AudioPlayer();
   final RxBool isLoading = false.obs;
   late TtsService _ttsService;
@@ -35,16 +33,16 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
   CustomPaint? customPaint;
   RxString textObx = "".obs;
 
+  // Quantidade de caracteres do texto (a ElevenLabs cobra por caractere)
+  final RxInt charCount = 0.obs;
+
+  // Estado do player
+  final RxBool hasAudio = false.obs;
+  final RxBool isPlaying = false.obs;
   Rx<Duration> duration = const Duration().obs;
   Rx<Duration> position = const Duration().obs;
 
-  late AnimationController animationController;
-  late Animation<double> buttonAnimatedIcon;
-  // This is used for the child FABs
-  late Animation<double> translateButton;
-  RxBool isExpandedMenu = false.obs;
-
-  final key = GlobalKey<ExpandableFabState>();
+  final List<StreamSubscription<dynamic>> _subscriptions = [];
 
   final controllerWaveForm = IOS7SiriWaveformController(
     amplitude: 0.7,
@@ -58,54 +56,67 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
     super.onInit();
     _ttsService = TtsService(API_KEY);
     imagePicker = ImagePicker();
-    animationController =
-        AnimationController(
-          vsync: this,
-          duration: const Duration(milliseconds: 600),
-        )..addListener(() {
-          update();
-        });
-
-    buttonAnimatedIcon = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(animationController);
+    textController.addListener(() {
+      charCount.value = textController.text.length;
+    });
+    observeAudioStream();
   }
 
   Future<void> speak() async {
     final text = textController.text.trim();
     if (text.isEmpty) return;
 
+    FocusManager.instance.primaryFocus?.unfocus();
     isLoading.value = true;
     try {
       final bytes = await _ttsService.synthesize(text);
       final audioSource = GnixAudioSource(bytes);
       await player.setAudioSource(audioSource);
+      hasAudio.value = true;
       HapticsHelper.success();
-      await player.play();
-      observeAudioStream();
+      // Sem await: no just_audio, play() só retorna quando a reprodução termina
+      player.play();
     } catch (e) {
       HapticsHelper.error();
-      DelightToastBar(
-        autoDismiss: false,
-        builder: (context) => const ToastCard(
-          leading: Icon(Icons.flutter_dash, size: 28),
-          title: Text(
-            "Erro ao sintetizar o texto.",
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-          ),
-        ),
-      ).show(Get.context!);
+      showMessage('Não foi possível gerar o áudio.');
+      debugPrint('Erro ao sintetizar o texto: ${e.toString()}');
     } finally {
       isLoading.value = false;
     }
   }
 
+  void togglePlayback() {
+    if (player.playing && player.processingState != ProcessingState.completed) {
+      player.pause();
+      return;
+    }
+    if (player.processingState == ProcessingState.completed) {
+      player.seek(Duration.zero);
+    }
+    player.play();
+  }
+
+  void clearText() {
+    textController.clear();
+  }
+
+  Future<void> pasteText() async {
+    final ClipboardData? data = await Clipboard.getData(Clipboard.kTextPlain);
+    final String? text = data?.text;
+    if (text == null || text.isEmpty) {
+      HapticsHelper.warning();
+      showMessage('Não há texto copiado para colar.');
+      return;
+    }
+    textController.text = text;
+    textController.selection = TextSelection.collapsed(offset: text.length);
+  }
+
   void showMessage(String text) {
     DelightToastBar(
-      autoDismiss: false,
+      autoDismiss: true,
       builder: (context) => ToastCard(
-        leading: const Icon(Icons.flutter_dash, size: 28),
+        leading: const Icon(Icons.info_outline_rounded, size: 28),
         title: Text(
           text,
           style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
@@ -114,23 +125,19 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
     ).show(Get.context!);
   }
 
-  void toggle() {
-    if (isExpandedMenu.value) {
-      animationController.reverse();
-    } else {
-      animationController.forward();
-    }
-
-    isExpandedMenu.value = !isExpandedMenu.value;
-  }
-
   void observeAudioStream() {
-    player.durationStream.listen((d) {
-      duration.value = d!;
-    });
-    player.positionStream.listen((p) {
-      position.value = p;
-    });
+    _subscriptions.addAll([
+      player.durationStream.listen((d) {
+        duration.value = d ?? Duration.zero;
+      }),
+      player.positionStream.listen((p) {
+        position.value = p;
+      }),
+      player.playerStateStream.listen((state) {
+        isPlaying.value =
+            state.playing && state.processingState != ProcessingState.completed;
+      }),
+    ]);
   }
 
   void changeToSecond(int second) {
@@ -153,6 +160,7 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
   Future<void> processImagePicker(ImageSource source) async {
     if (isProcessing.value) return;
 
+    FocusManager.instance.primaryFocus?.unfocus();
     isProcessing.value = true;
     image = null;
     path = null;
@@ -169,11 +177,11 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
     } on PlatformException catch (e) {
       HapticsHelper.error();
       showMessage('Falha ao obter imagem: ${e.message}');
-      print('PlatformException ao obter imagem: ${e.toString()}');
+      debugPrint('PlatformException ao obter imagem: ${e.toString()}');
     } catch (e) {
       HapticsHelper.error();
-      showMessage('Ocorreu um erro: ${e.toString()}');
-      print('Erro ao obter imagem: ${e.toString()}');
+      showMessage('Ocorreu um erro ao obter a imagem.');
+      debugPrint('Erro ao obter imagem: ${e.toString()}');
     } finally {
       isProcessing.value = false;
     }
@@ -188,10 +196,8 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
       await _processImage2(inputImage);
     } catch (e) {
       HapticsHelper.error();
-      ScaffoldMessenger.of(Get.context!).showSnackBar(
-        SnackBar(content: Text('Erro ao processar imagem: ${e.toString()}')),
-      );
-      print('Erro ao processar arquivo: ${e.toString()}');
+      showMessage('Não foi possível processar a imagem.');
+      debugPrint('Erro ao processar arquivo: ${e.toString()}');
     }
   }
 
@@ -205,9 +211,6 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
       // Processamento do texto
       final recognizedText = await textRecognizer.processImage(inputImage);
-      // .timeout(const Duration(seconds: 10), onTimeout: () {
-      //   throw TimeoutException('Tempo limite excedido no processamento de texto');
-      // });
 
       // Atualização da UI com os resultados
       if (inputImage.metadata?.size != null &&
@@ -218,13 +221,16 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
           inputImage.metadata!.rotation,
         );
         customPaint = CustomPaint(painter: painter);
+      } else if (recognizedText.text.trim().isEmpty) {
+        HapticsHelper.warning();
+        showMessage('Nenhum texto encontrado na imagem.');
       } else {
         textObx.value = recognizedText.text;
         textController.text = recognizedText.text;
         HapticsHelper.success();
         customPaint = null;
-        player.clearAudioSources();
-        key.currentState?.toggle();
+        await player.stop();
+        hasAudio.value = false;
       }
       isBusy.value = false;
     } on PlatformException catch (e) {
@@ -238,23 +244,23 @@ class HomeController extends GetxController with GetTickerProviderStateMixin {
 
   void _handleError(String message) {
     HapticsHelper.error();
+    isBusy.value = false;
     textObx.value = 'Falha ao processar imagem';
     customPaint = null;
+    showMessage('Não foi possível ler o texto da imagem.');
 
     // Opcional: Log para debug
     debugPrint('Erro no processamento de imagem: $message');
   }
 
   @override
-  void dispose() {
-    super.dispose();
-    animationController.dispose();
-    disposee();
-  }
-
-  void disposee() {
+  void onClose() {
+    for (final subscription in _subscriptions) {
+      subscription.cancel();
+    }
     textController.dispose();
     player.dispose();
-    isLoading.value = false;
+    textRecognizer.close();
+    super.onClose();
   }
 }

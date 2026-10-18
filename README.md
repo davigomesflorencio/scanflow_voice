@@ -13,6 +13,10 @@ ScanFlow Voice é um aplicativo móvel desenvolvido em Flutter que transforma te
 - **Síntese de Voz a partir de Texto:** Digite qualquer frase ou texto para convertê-lo em áudio.
 - **Leitura de Imagens (OCR):** Tire fotos ou faça upload de imagens da galeria; o app extrai o texto contido na imagem e o converte em fala.
 - **Vozes Realistas:** Integração com a API da ElevenLabs para gerar vozes naturais e expressivas.
+- **Player:** Toque, pause e navegue pelo áudio gerado, com onda animada durante a reprodução.
+- **Contador de caracteres:** Mostra o tamanho do texto, já que a ElevenLabs cobra por caractere.
+- **Modo escuro:** Segue o tema do sistema.
+- **Novidades:** Na primeira abertura após uma atualização, um diálogo mostra o que mudou.
 
 ## Tecnologias Utilizadas
 
@@ -34,14 +38,12 @@ ScanFlow Voice é um aplicativo móvel desenvolvido em Flutter que transforma te
 | `camera`                        | ^0.12.1   | Acesso às câmeras do dispositivo.                                  |
 | `get`                           | ^4.7.3    | Controllers, estado reativo e navegação.                           |
 | `flutter_dotenv`                | ^6.0.1    | Leitura da chave de API a partir do arquivo `.env`.                |
-| `flutter_expandable_fab`        | ^2.5.2    | Botão flutuante expansível com as ações de câmera e galeria.       |
 | `siri_wave`                     | ^2.3.1    | Animação de onda durante a reprodução do áudio.                    |
 | `delightful_toast`              | ^1.1.0    | Mensagens de feedback para o usuário.                              |
 | `package_info_plus`             | ^10.2.2   | Leitura da versão instalada do app.                                |
 | `shared_preferences`            | ^2.5.6    | Guarda a última versão vista pelo usuário.                         |
 | `pub_semver`                    | ^2.2.1    | Comparação de versões para o diálogo de novidades.                 |
-
-> `flutter_expandable_fab` está fixado na série 2.x: a versão 3.0.0 exige migrar o app para `package:material_ui`. Veja o [CHANGELOG](CHANGELOG.md).
+| `haptic_feedback`               | ^0.8.0    | Vibração em sucessos, erros e cancelamentos.                       |
 
 ## Arquitetura e Padrões de Projeto
 
@@ -49,15 +51,21 @@ O projeto foi estruturado visando a manutenibilidade e a separação de responsa
 
 ```
 lib/
-├── main.dart                     # Inicialização, carregamento do .env e tema
+├── main.dart                     # Inicialização, carregamento do .env e temas claro/escuro
 ├── changelog/changelog.dart      # Novidades por versão, mostradas após atualizar
-├── components/painters/          # Desenho dos blocos de texto reconhecidos
+├── components/
+│   ├── asset_preloader.dart      # Pré-carrega o ícone antes do primeiro quadro
+│   ├── bottom_padding.dart       # Espaço da altura da barra de navegação do sistema
+│   ├── version_indicator.dart    # Versão e build do app
+│   └── painters/                 # Desenho dos blocos de texto reconhecidos
 ├── controllers/
 │   ├── home_controller.dart      # Estado da tela, OCR e reprodução de áudio
 │   └── changelog_controller.dart # Diálogo "Novidades" após uma atualização
 ├── domain/audio/                 # Fonte de áudio em memória para o just_audio
-├── screens/home_page.dart        # Interface principal
-└── services/tts_service.dart     # Integração com a ElevenLabs
+├── screens/home_page.dart        # Editor de texto, player e botão "Ouvir texto"
+└── services/
+    ├── tts_service.dart          # Integração com a ElevenLabs
+    └── haptics_helper.dart       # Atalhos de vibração
 ```
 
 ### Service Pattern (Padrão de Serviço)
@@ -73,6 +81,16 @@ A lógica de comunicação com APIs externas é isolada em classes de serviço d
 - **Screens/Components:** Camada de apresentação, responsável apenas por desenhar a tela e capturar interações do usuário.
 
 ## Preview
+
+### Versão 2.0.0
+
+<div>
+<img src="assets/2.0.0/escuro_vazio.png" alt="Tela principal vazia no modo escuro, com a dica 'Digite ou fotografe um texto para ouvir' e o botão Ouvir texto desativado" style="width:200px;"/>
+<img src="assets/2.0.0/escuro_texto.png" alt="Tela principal no modo escuro com um texto digitado, contador de 122 caracteres e o botão Ouvir texto ativo" style="width:200px;"/>
+<img src="assets/2.0.0/claro_texto.png" alt="Tela principal no modo claro com um texto digitado e o botão Ouvir texto ativo" style="width:200px;"/>
+</div>
+
+### Versão 1.0.0
 
 <div>
 <img src="assets/1.0.0/Screenshot_20251229_165241.jpg" alt="drawing" style="width:200px;"/>
@@ -130,7 +148,7 @@ O Kotlin embutido do AGP 9 está desligado (`android.builtInKotlin=false` e `and
    API_KEY=sua_chave_aqui
    ```
    O arquivo já está no `.gitignore` e é carregado como asset na inicialização do app.
-   A chave é gerada no painel da ElevenLabs, em **Developers → API Keys** ([elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys)).
+   A chave é gerada no painel da ElevenLabs, em **Developers → API Keys** ([elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys)). Ela **começa com `sk_`** e só aparece uma vez, quando é criada ou girada. O identificador da chave mostrado na lista (uma sequência hexadecimal sem `sk_`) não funciona.
 
    > **Atenção:** sem o `.env` o app não compila, porque o arquivo é declarado como asset no `pubspec.yaml`. Nunca faça commit da chave real nem a coloque no README ou no código.
 3. Instale as dependências:
@@ -184,6 +202,16 @@ A cada nova versão:
 3. Adicione as novidades para o usuário no mapa `_changelog` de `lib/changelog/changelog.dart`. Elas aparecem num diálogo na primeira abertura após a atualização.
 
 ### Solução de problemas
+
+**"Não foi possível gerar o áudio"**
+
+Quase sempre é a chave da ElevenLabs. Com o app rodando em debug, o log mostra o motivo (`Erro ao sintetizar o texto: ...`). Para testar a chave fora do app, sem gastar créditos:
+
+```bash
+curl -H "xi-api-key: $API_KEY" https://api.elevenlabs.io/v1/user/subscription
+```
+
+Se a resposta disser `API key ID used as API key`, o `.env` está com o identificador da chave e não com a chave em si. Gere ou gire a chave no painel e use o valor que começa com `sk_`. Depois de trocar o `.env`, rode `flutter run` de novo: o arquivo é empacotado no app durante o build.
 
 **`Could not locate aapt` seguido de `Activity class {com.example.gnix_tts/...MainActivity} does not exist`**
 

@@ -9,11 +9,27 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ### Adicionado
 
+- **Novo visual da tela principal**, focado no texto: o campo ocupa a tela, com uma barra de ações (câmera, galeria, colar, limpar) e contador de caracteres. O botão "Ouvir texto" e o player ficam num painel fixo embaixo.
+- **Player com tocar/pausar**, tempos com algarismos de largura fixa e barra de posição nas cores do tema. A onda animada aparece enquanto o áudio toca.
+- **Modo escuro**, seguindo o tema do sistema.
+- **Contador de caracteres** (a ElevenLabs cobra por caractere).
+- Botão para **colar** o texto copiado.
 - Diálogo "Novidades" na primeira abertura após uma atualização (nunca na primeira instalação), com as mudanças de todas as versões que o usuário ainda não viu. Textos em `lib/changelog/changelog.dart`.
-- Dependências `package_info_plus`, `shared_preferences` e `pub_semver`.
+- Vibração em sucessos (áudio pronto, texto reconhecido), erros e cancelamentos, com o pacote `haptic_feedback`.
+- Versão e build do app no fim da tela.
+- Barra de progresso enquanto a versão web carrega.
+- Dependências `package_info_plus`, `shared_preferences`, `pub_semver` e `haptic_feedback`.
 - Planos de melhoria de design em `docs/improvements/design/`.
 
 ### Alterado
+
+- Interface toda em português (antes misturava "Enter some text", "Take Photo" etc. com mensagens em português).
+- Cores vindas do tema em vez de valores fixos (título preto, slider preto e cinza, fundo branco).
+- O ícone do microfone foi para o lado do título, num círculo claro legível nos dois temas.
+- Mensagens de erro sem detalhes técnicos da exceção.
+- Cursor e seleção de texto com o turquesa do app.
+- O conteúdo rola até a borda, com espaço da altura da barra de navegação do sistema.
+- O ícone do app é pré-carregado antes do primeiro quadro.
 
 - Dependências atualizadas para as versões mais recentes compatíveis com Flutter 3.47 / Dart 3.13:
 
@@ -36,9 +52,19 @@ e o projeto adota o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 - Android: o build de release não falha mais sem `android/key.properties`; nesse caso assina com a chave de debug.
 - `analysis_options.yaml` passa a excluir da análise as pastas de build e de plataforma (`android`, `ios`, `web`, `windows`, `macos`, `linux`).
 
-### Observações
+### Removido
 
-- `flutter_expandable_fab` foi mantido em `^2.5.2`. A versão 3.0.0 migrou para `package:material_ui`, e seu `ExpandableFab.location` deixou de ser compatível com o `Scaffold` de `package:flutter/material.dart`. A atualização exige migrar o app inteiro para `material_ui`.
+- Botão flutuante expansível de câmera e galeria (as ações foram para a barra do campo de texto) e a dependência `flutter_expandable_fab`.
+- `autofocus` do campo de texto: o teclado não abre mais sozinho, nem volta depois do diálogo de novidades.
+
+### Corrigido
+
+- O botão de gerar áudio ficava "carregando" durante toda a reprodução, porque `player.play()` do `just_audio` só retorna quando o áudio termina.
+- Os ouvintes de posição e duração do player eram criados de novo a cada áudio gerado.
+- O card do player dependia de `player.audioSource`, que não é reativo, e podia não atualizar.
+- Erro quando a duração do áudio vinha nula.
+- Player, campo de texto e reconhecedor de texto agora são liberados quando o controller é fechado.
+- Aviso quando a foto não tem texto, em vez de apagar o campo.
 
 ## [1.0.0] - 2025-12-29
 
