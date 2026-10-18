@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:get/get.dart';
 import 'package:gnix_tts/components/bottom_padding.dart';
+import 'package:gnix_tts/components/version_indicator.dart';
 import 'package:gnix_tts/controllers/home_controller.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:siri_wave/siri_wave.dart';
@@ -215,6 +216,8 @@ class HomePage extends GetView<HomeController> {
                       ),
               ),
             ),
+            const SizedBox(height: 24),
+            const VersionIndicator(),
           ],
         ),
       ),
