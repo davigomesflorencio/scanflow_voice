@@ -2,6 +2,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:gnix_tts/components/asset_preloader.dart';
+import 'package:gnix_tts/components/friendly_error_view.dart';
 import 'package:gnix_tts/controllers/changelog_controller.dart';
 import 'package:gnix_tts/controllers/home_controller.dart';
 import 'package:gnix_tts/screens/home_page.dart';
@@ -16,6 +17,7 @@ Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
   _cameras = await availableCameras();
 
+  ErrorWidget.builder = (details) => FriendlyErrorView(details: details);
   WidgetsBinding.instance.deferFirstFrame();
   runApp(const MyApp());
 }
