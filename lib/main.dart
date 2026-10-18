@@ -1,6 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:gnix_tts/controllers/changelog_controller.dart';
 import 'package:gnix_tts/controllers/home_controller.dart';
 import 'package:gnix_tts/screens/home_page.dart';
 
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
       ),
       initialBinding: BindingsBuilder(() {
         Get.lazyPut(() => HomeController());
+        Get.put(ChangelogController());
       }),
       home: HomePage(),
     );

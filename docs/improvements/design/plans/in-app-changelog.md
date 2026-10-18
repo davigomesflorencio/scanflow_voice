@@ -24,7 +24,7 @@ O app tem uma única tela, `HomePage`, e usa GetX. O controller da tela é regis
 A versão atual do app está em `pubspec.yaml:7`:
 
 ```yaml
-version: 1.0.1+11
+version: 2.0.0+11
 ```
 
 Nenhum arquivo do app trata changelog hoje.
@@ -49,8 +49,9 @@ import 'package:pub_semver/pub_semver.dart';
 enum Language { pt }
 
 const Map<String, Map<Language, List<String>>> _changelog = {
-  '1.0.1': {
+  '2.0.0': {
     Language.pt: [
+      'Agora o app mostra as novidades sempre que for atualizado.',
       'Bibliotecas atualizadas para mais estabilidade.',
     ],
   },
@@ -185,7 +186,7 @@ Registro no binding (alvo):
 - `dart analyze` termina sem **erros** (os avisos que já existiam antes podem continuar).
 - `grep -c "Get.put(ChangelogController())" lib/main.dart` → 1
 - `grep -c "last_seen_version" lib/controllers/changelog_controller.dart` → 4
-- `grep -c "'1.0.1'" lib/changelog/changelog.dart` → 1
+- `grep -c "'2.0.0'" lib/changelog/changelog.dart` → 1
 - `grep -cE "^  (package_info_plus|shared_preferences|pub_semver):" pubspec.yaml` → 3
 
 ## Não mexer
@@ -198,7 +199,7 @@ Registro no binding (alvo):
 ## PARE se
 
 - O trecho de `lib/main.dart` citado em "Onde" não existir mais (o código mudou desde que este plano foi escrito). Outros planos desta pasta podem ter mudado linhas próximas em `main.dart`; isso é normal, desde que o bloco `BindingsBuilder` continue lá.
-- A versão em `pubspec.yaml` não for `1.0.1+...` (a entrada do mapa precisa ser revista).
+- A versão em `pubspec.yaml` não for `2.0.0+...` (a entrada do mapa precisa ser revista).
 - A correção parecer exigir mexer em algo de "Não mexer".
 - Uma verificação falhar duas vezes.
 

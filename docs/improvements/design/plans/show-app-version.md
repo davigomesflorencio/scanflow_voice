@@ -133,4 +133,4 @@ Alvo em `home_page.dart`, como últimos filhos da `Column` principal:
 
 ## Ao terminar
 
-Diga ao desenvolvedor, em duas ou três frases, que o fim da tela principal agora mostra, em cinza discreto, o nome, a versão e o número de build do app (ex.: `gnix_tts 1.0.1 (11)`). Para ver, abra o app e role até o fim da tela.
+Diga ao desenvolvedor, em duas ou três frases, que o fim da tela principal agora mostra, em cinza discreto, o nome, a versão e o número de build do app (ex.: `gnix_tts 2.0.0 (11)`). Para ver, abra o app e role até o fim da tela.
