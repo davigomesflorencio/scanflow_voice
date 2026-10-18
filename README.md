@@ -85,7 +85,9 @@ A lógica de comunicação com APIs externas é isolada em classes de serviço d
 ### Versão 2.0.0
 
 <div>
-<img src="assets/2.0.0/tela_principal_escuro.png" alt="Tela principal no modo escuro: editor de texto com barra de ações e botão Ouvir texto" style="width:200px;"/>
+<img src="assets/2.0.0/escuro_vazio.png" alt="Tela principal vazia no modo escuro, com a dica 'Digite ou fotografe um texto para ouvir' e o botão Ouvir texto desativado" style="width:200px;"/>
+<img src="assets/2.0.0/escuro_texto.png" alt="Tela principal no modo escuro com um texto digitado, contador de 122 caracteres e o botão Ouvir texto ativo" style="width:200px;"/>
+<img src="assets/2.0.0/claro_texto.png" alt="Tela principal no modo claro com um texto digitado e o botão Ouvir texto ativo" style="width:200px;"/>
 </div>
 
 ### Versão 1.0.0
