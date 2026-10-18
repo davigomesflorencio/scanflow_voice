@@ -36,10 +36,7 @@ class _AssetPreloaderState extends State<AssetPreloader> {
       // O usuário vê estas imagens assim que o app abre
       await precacheAssets(
         context: context,
-        paths: [
-          'assets/ai-microphone.png',
-          'assets/speech.png',
-        ],
+        paths: ['assets/ai-microphone.png'],
       );
     } finally {
       WidgetsBinding.instance.allowFirstFrame();

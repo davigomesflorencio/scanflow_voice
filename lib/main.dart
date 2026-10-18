@@ -29,30 +29,41 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'ScanFlow Voice',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Color.fromARGB(255, 51, 204, 204),
-        ),
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        appBarTheme: const AppBarTheme(centerTitle: true, elevation: 2),
-        cardTheme: CardThemeData(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        fontFamily: 'Rubik',
-        textSelectionTheme: TextSelectionThemeData(
-          selectionColor: Color.fromARGB(255, 51, 204, 204).withValues(alpha: 0.3),
-          selectionHandleColor: Color.fromARGB(255, 51, 204, 204),
-          cursorColor: Color.fromARGB(255, 51, 204, 204),
-        ),
-      ),
+      theme: _buildTheme(Brightness.light),
+      darkTheme: _buildTheme(Brightness.dark),
+      themeMode: ThemeMode.system,
       initialBinding: BindingsBuilder(() {
         Get.lazyPut(() => HomeController());
         Get.put(ChangelogController());
       }),
       home: AssetPreloader(child: HomePage()),
+    );
+  }
+
+  ThemeData _buildTheme(Brightness brightness) {
+    const Color brand = Color.fromARGB(255, 51, 204, 204);
+
+    return ThemeData(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: brand,
+        brightness: brightness,
+      ),
+      visualDensity: VisualDensity.adaptivePlatformDensity,
+      appBarTheme: const AppBarTheme(
+        centerTitle: true,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+      ),
+      cardTheme: CardThemeData(
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      fontFamily: 'Rubik',
+      textSelectionTheme: TextSelectionThemeData(
+        selectionColor: brand.withValues(alpha: 0.3),
+        selectionHandleColor: brand,
+        cursorColor: brand,
+      ),
     );
   }
 }

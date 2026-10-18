@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_expandable_fab/flutter_expandable_fab.dart';
 import 'package:get/get.dart';
 import 'package:gnix_tts/components/bottom_padding.dart';
 import 'package:gnix_tts/components/version_indicator.dart';
@@ -7,239 +6,309 @@ import 'package:gnix_tts/controllers/home_controller.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:siri_wave/siri_wave.dart';
 
+const List<FontFeature> _tabularFigures = [FontFeature.tabularFigures()];
+
 class HomePage extends GetView<HomeController> {
+  const HomePage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'ScanFlow Voice',
-          style: TextStyle(
-            // fontSize: 10,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-            fontFamily: "Rubik",
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Círculo claro nos dois temas: o ícone tem traços pretos
+            Container(
+              width: 36,
+              height: 36,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryFixed,
+                shape: BoxShape.circle,
+              ),
+              child: Image.asset('assets/ai-microphone.png'),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'ScanFlow Voice',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ],
         ),
       ),
-      floatingActionButtonLocation: ExpandableFab.location,
-      floatingActionButton: ExpandableFab(
-        key: controller.key,
-        type: ExpandableFabType.up,
-        distance: 70,
-        overlayStyle: ExpandableFabOverlayStyle(
-          color: Colors.white.withValues(alpha: .5),
-        ),
+      body: Column(
         children: [
-          Row(
-            children: [
-              Text('Take Photo'),
-              SizedBox(width: 20),
-              FloatingActionButton.small(
-                heroTag: null,
-                child: const Icon(Icons.camera_alt),
-                onPressed: () {
-                  controller.processImagePicker(ImageSource.camera);
-                },
-              ),
-            ],
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: _buildEditor(context),
+            ),
           ),
-          Row(
-            children: [
-              Text('Select from Gallery'),
-              SizedBox(width: 20),
-              FloatingActionButton.small(
-                heroTag: null,
-                child: const Icon(Icons.photo_camera_back_outlined),
-                onPressed: () {
-                  controller.processImagePicker(ImageSource.gallery);
-                },
+          _buildPanel(context),
+        ],
+      ),
+    );
+  }
+
+  /// Área principal: o texto a ser lido e as ações que o preenchem.
+  Widget _buildEditor(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final TextTheme tt = Theme.of(context).textTheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: cs.outlineVariant),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller.textController,
+              expands: true,
+              minLines: null,
+              maxLines: null,
+              keyboardType: TextInputType.multiline,
+              textCapitalization: TextCapitalization.sentences,
+              textAlignVertical: TextAlignVertical.top,
+              style: tt.bodyLarge?.copyWith(fontSize: 18, height: 1.5),
+              onTapOutside: (_) =>
+                  FocusManager.instance.primaryFocus?.unfocus(),
+              decoration: InputDecoration(
+                hintText: 'Digite ou fotografe um texto para ouvir…',
+                hintStyle: tt.bodyLarge?.copyWith(
+                  fontSize: 18,
+                  color: cs.onSurfaceVariant,
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
               ),
-            ],
+            ),
+          ),
+          Obx(
+            () => SizedBox(
+              height: 2,
+              child: controller.isProcessing.value || controller.isBusy.value
+                  ? const LinearProgressIndicator(minHeight: 2)
+                  : Divider(height: 2, thickness: 1, color: cs.outlineVariant),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Obx(() {
+              final bool busy = controller.isProcessing.value;
+              final int count = controller.charCount.value;
+
+              return Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Fotografar texto',
+                    icon: const Icon(Icons.photo_camera_outlined),
+                    onPressed: busy
+                        ? null
+                        : () =>
+                              controller.processImagePicker(ImageSource.camera),
+                  ),
+                  IconButton(
+                    tooltip: 'Escolher da galeria',
+                    icon: const Icon(Icons.photo_library_outlined),
+                    onPressed: busy
+                        ? null
+                        : () => controller.processImagePicker(
+                            ImageSource.gallery,
+                          ),
+                  ),
+                  IconButton(
+                    tooltip: 'Colar',
+                    icon: const Icon(Icons.content_paste_rounded),
+                    onPressed: controller.pasteText,
+                  ),
+                  IconButton(
+                    tooltip: 'Limpar texto',
+                    icon: const Icon(Icons.clear_rounded),
+                    onPressed: count == 0 ? null : controller.clearText,
+                  ),
+                  const Spacer(),
+                  Text(
+                    _formatCharCount(count),
+                    style: tt.labelMedium?.copyWith(
+                      color: cs.onSurfaceVariant,
+                      fontFeatures: _tabularFigures,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+              );
+            }),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(
-          16.0,
-        ).copyWith(bottom: BottomPadding.of(context, minimum: 16)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.only(top: 50, bottom: 50),
-              child: Image(
-                image: AssetImage('assets/ai-microphone.png'),
-                width: 150,
-                height: 150,
-              ),
-            ),
-            Obx(
-              () => controller.isLoading.value
-                  ? SiriWaveform.ios7(
-                      controller: controller.controllerWaveForm,
-                      options: const IOS7SiriWaveformOptions(
-                        height: 100,
-                        width: 400,
-                      ),
-                    )
-                  : SizedBox(),
-            ),
-            TextField(
-              controller: controller.textController,
-              autofocus: true,
-              decoration: const InputDecoration(labelText: 'Enter some text'),
-              minLines: 1,
-              maxLines: null,
-            ),
-            const SizedBox(height: 32.0),
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300, width: 1),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withValues(alpha: 0.3),
-                    spreadRadius: 2,
-                    blurRadius: 5,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-                color: Colors.white, // Fundo branco para ver a sombra
-              ),
-              height: 170,
-              padding: EdgeInsets.only(left: 5, right: 5, top: 20, bottom: 20),
-              child: Obx(
-                () => (controller.player.audioSource == null)
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              shape: CircleBorder(),
-                              padding: EdgeInsets.all(5), // Adjust for size
-                            ),
-                            onPressed:
-                                controller.isLoading.value &&
-                                    controller.textController.text.isNotEmpty
-                                ? null
-                                : controller.speak,
-                            child: controller.isLoading.value
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.0,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : Image.asset(
-                                    'assets/speech.png',
-                                    width: 40,
-                                    height: 40,
-                                  ),
-                          ),
-                          Text(
-                            "Click here to generate the text audio",
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      )
-                    : Column(
-                        children: [
-                          Row(
-                            children: [
-                              Obx(
-                                () => ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    shape: CircleBorder(),
-                                    padding: EdgeInsets.all(
-                                      5,
-                                    ), // Adjust for size
-                                  ),
-                                  onPressed:
-                                      controller.isLoading.value &&
-                                          controller
-                                              .textController
-                                              .text
-                                              .isNotEmpty
-                                      ? null
-                                      : controller.speak,
-                                  child: controller.isLoading.value
-                                      ? const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2.0,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : Image.asset(
-                                          'assets/speech.png',
-                                          width: 40,
-                                          height: 40,
-                                        ),
-                                ),
-                              ),
-                              Text(
-                                "Control the audio using the bar below",
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                            ],
-                          ),
+    );
+  }
 
-                          SizedBox(height: 15),
-                          Row(
-                            children: [
-                              SizedBox(width: 5),
-                              Obx(
-                                () => Text(
-                                  controller.formatDuration(
-                                    controller.position.value,
-                                  ),
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                              ),
-                              slider(),
-                              Obx(
-                                () => Text(
-                                  controller.formatDuration(
-                                    controller.duration.value,
-                                  ),
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                              ),
-                              SizedBox(width: 5),
-                            ],
-                          ),
-                        ],
-                      ),
-              ),
+  /// Painel fixo embaixo: player (depois de gerar o áudio) e botão principal.
+  Widget _buildPanel(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final TextTheme tt = Theme.of(context).textTheme;
+    final bool keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+
+    return Material(
+      color: cs.surfaceContainer,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          12,
+          16,
+          keyboardOpen ? 12 : BottomPadding.of(context, minimum: 16),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Obx(
+              () => controller.hasAudio.value
+                  ? _buildPlayer(context)
+                  : const SizedBox.shrink(),
             ),
-            const SizedBox(height: 24),
-            const VersionIndicator(),
+            Obx(() {
+              final bool loading = controller.isLoading.value;
+              final bool empty = controller.charCount.value == 0;
+
+              return SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: FilledButton.icon(
+                  onPressed: loading || empty ? null : controller.speak,
+                  style: FilledButton.styleFrom(
+                    shape: const StadiumBorder(),
+                    textStyle: tt.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  icon: loading
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: cs.primary,
+                          ),
+                        )
+                      : const Icon(Icons.graphic_eq_rounded),
+                  label: Text(
+                    loading
+                        ? 'Gerando áudio…'
+                        : controller.hasAudio.value
+                        ? 'Gerar áudio de novo'
+                        : 'Ouvir texto',
+                  ),
+                ),
+              );
+            }),
+            if (!keyboardOpen) ...[
+              const SizedBox(height: 10),
+              const VersionIndicator(),
+            ],
           ],
         ),
       ),
     );
   }
 
+  Widget _buildPlayer(BuildContext context) {
+    final TextTheme tt = Theme.of(context).textTheme;
+    final TextStyle? timeStyle = tt.labelLarge?.copyWith(
+      fontFeatures: _tabularFigures,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 48,
+            child: Obx(
+              () => controller.isPlaying.value
+                  ? LayoutBuilder(
+                      builder: (context, constraints) => SiriWaveform.ios7(
+                        controller: controller.controllerWaveForm,
+                        options: IOS7SiriWaveformOptions(
+                          height: 48,
+                          width: constraints.maxWidth,
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ),
+          Row(
+            children: [
+              Obx(
+                () => IconButton.filledTonal(
+                  iconSize: 28,
+                  tooltip: controller.isPlaying.value ? 'Pausar' : 'Tocar',
+                  icon: Icon(
+                    controller.isPlaying.value
+                        ? Icons.pause_rounded
+                        : Icons.play_arrow_rounded,
+                  ),
+                  onPressed: controller.togglePlayback,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Obx(
+                () => Text(
+                  controller.formatDuration(controller.position.value),
+                  style: timeStyle,
+                ),
+              ),
+              Expanded(child: slider()),
+              Obx(
+                () => Text(
+                  controller.formatDuration(controller.duration.value),
+                  style: timeStyle,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget slider() {
     return Obx(() {
-      return Expanded(
-        child: Slider(
-          activeColor: Colors.black,
-          inactiveColor: Colors.grey,
-          thumbColor: Color.fromARGB(255, 51, 204, 204),
-          value: controller.position.value.inSeconds.toDouble(),
-          min: 0.0,
-          max: controller.duration.value.inSeconds.toDouble(),
-          onChanged: (double value) {
-            controller.changeToSecond(value.toInt());
-            value = value;
-          },
-        ),
+      final double max = controller.duration.value.inSeconds.toDouble();
+      final double safeMax = max > 0 ? max : 1;
+      final double value = controller.position.value.inSeconds.toDouble().clamp(
+        0,
+        safeMax,
+      );
+
+      return Slider(
+        value: value,
+        min: 0.0,
+        max: safeMax,
+        onChanged: max > 0
+            ? (double value) => controller.changeToSecond(value.toInt())
+            : null,
       );
     });
+  }
+
+  /// "1 caractere", "980 caracteres", "1.240 caracteres".
+  String _formatCharCount(int count) {
+    final String digits = count.toString();
+    final StringBuffer buffer = StringBuffer();
+    for (int i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) buffer.write('.');
+      buffer.write(digits[i]);
+    }
+    return '$buffer ${count == 1 ? 'caractere' : 'caracteres'}';
   }
 }
